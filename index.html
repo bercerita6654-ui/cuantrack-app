@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pencatat Keuangan Pribadi Pintar</title>
+    <title>CuanTrack</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -50,21 +50,41 @@
 </head>
 <body class="text-slate-800 antialiased">
 
+    <!-- Login Screen Overlay -->
+    <div id="loginScreen" class="absolute inset-0 z-[100] bg-slate-50 flex flex-col items-center justify-center p-6 transition-opacity duration-500">
+        <div class="w-24 h-24 bg-brand-100 rounded-full flex items-center justify-center text-brand-600 shadow-inner mb-6 relative">
+            <i class="fa-solid fa-wallet text-5xl relative z-10"></i>
+            <div class="absolute inset-0 bg-brand-500 rounded-full animate-ping opacity-20"></div>
+        </div>
+        <h1 class="text-3xl font-extrabold text-slate-900 mb-2">CuanTrack</h1>
+        <p class="text-slate-500 text-center mb-10 font-medium max-w-xs">Kelola pemasukan dan pengeluaran Anda dengan cerdas dan tersinkronisasi di Cloud.</p>
+        
+        <button onclick="loginApp()" class="flex items-center gap-4 bg-white border border-slate-200 px-6 py-4 rounded-2xl shadow-lg hover:shadow-xl hover:bg-slate-50 transition-all font-bold text-slate-700 active:scale-95 w-full max-w-xs justify-center relative overflow-hidden group">
+            <div class="absolute inset-y-0 left-0 w-1 bg-brand-500 rounded-l-2xl group-hover:w-2 transition-all"></div>
+            <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6 h-6" alt="Google">
+            Lanjutkan dengan Google
+        </button>
+        <p id="loginError" class="text-xs text-red-500 font-medium mt-4 hidden text-center max-w-xs bg-red-50 p-3 rounded-xl border border-red-100"></p>
+    </div>
+
     <!-- Mobile App Container -->
     <div class="w-full h-[100dvh] max-w-md bg-slate-50 relative overflow-hidden flex flex-col sm:h-[90vh] sm:rounded-[2.5rem] sm:shadow-2xl sm:border-[8px] sm:border-slate-800">
         
         <!-- Main Scrollable Area -->
         <main class="flex-1 overflow-y-auto no-scrollbar pb-24 px-5 pt-8">
             
-            <!-- Header -->
+            <!-- Header with User Profile -->
             <header class="flex justify-between items-center mb-6">
-                <div>
-                    <p class="text-xs font-medium text-slate-500 uppercase tracking-wider mb-0.5">Keuangan Pintar</p>
-                    <h1 class="text-2xl font-bold text-slate-900">Halo, Pengguna!</h1>
+                <div class="flex items-center gap-3">
+                    <img id="userAvatar" src="https://ui-avatars.com/api/?name=User&background=eff6ff&color=3b82f6" class="w-11 h-11 rounded-full border-2 border-white shadow-sm object-cover" alt="User Avatar">
+                    <div>
+                        <p class="text-[10px] font-bold text-brand-600 uppercase tracking-wider mb-0.5">CuanTrack</p>
+                        <h1 id="userName" class="text-xl font-bold text-slate-900 leading-none truncate max-w-[150px]">Halo!</h1>
+                    </div>
                 </div>
-                <div class="w-11 h-11 bg-white rounded-full flex items-center justify-center text-brand-600 shadow-sm border border-slate-100">
-                    <i class="fa-solid fa-wallet text-xl"></i>
-                </div>
+                <button onclick="logout()" class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 shadow-sm border border-slate-100 transition-colors active:bg-slate-50" title="Keluar">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                </button>
             </header>
 
             <!-- Dashboard Card -->
@@ -72,7 +92,7 @@
                 <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
                 
                 <div class="relative z-10">
-                    <p class="text-slate-400 text-sm font-medium mb-1">Total Saldo Gabungan</p>
+                    <p class="text-slate-400 text-sm font-medium mb-1 flex items-center gap-2">Total Saldo <i class="fa-solid fa-cloud text-xs text-brand-400" title="Tersinkronisasi Cloud"></i></p>
                     <h2 id="totalAmount" class="text-4xl font-extrabold tracking-tight mb-6">Rp 0</h2>
                     
                     <div class="flex gap-3 text-sm mb-5">
@@ -307,17 +327,102 @@
             </div>
         </div>
 
+        <!-- 4. Custom Delete Confirm Modal -->
+        <div id="confirmModal" class="modal-sheet fixed inset-0 z-[110] flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 p-4">
+            <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeConfirmModal()"></div>
+            <div class="bg-white rounded-3xl p-6 w-full max-w-[320px] relative z-10 scale-95 transition-transform duration-300 shadow-2xl" id="confirmModalContent">
+                <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4 mx-auto text-2xl shadow-sm border border-red-100">
+                    <i class="fa-solid fa-trash-can"></i>
+                </div>
+                <h3 class="text-xl font-bold text-center text-slate-800 mb-2">Hapus Transaksi?</h3>
+                <p class="text-sm text-slate-500 text-center mb-8">Data ini akan dihapus permanen dari Cloud dan saldo Anda akan disesuaikan.</p>
+                <div class="flex gap-3">
+                    <button onclick="closeConfirmModal()" class="flex-1 py-3.5 bg-slate-100 text-slate-600 font-bold rounded-xl active:bg-slate-200 transition-colors">Batal</button>
+                    <button id="confirmDeleteBtn" class="flex-1 py-3.5 bg-red-500 text-white font-bold rounded-xl shadow-lg shadow-red-500/30 active:scale-95 transition-transform">Ya, Hapus</button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <script>
-        // --- DATA & STATE ---
+    <!-- Firebase & Application Logic -->
+    <script type="module">
+        // =====================================================================
+        // KONFIGURASI DATABASE UNTUK GOOGLE SITES / HOSTING SENDIRI
+        // =====================================================================
+        // Jika Anda memasang aplikasi ini di Google Sites, Anda WAJIB mengisi 
+        // bagian di bawah ini dengan konfigurasi dari project Firebase Anda.
+        const MY_FIREBASE_CONFIG = {
+            apiKey: "AIzaSyCKPqC3HZxuoZHrmdSEXIPcn6UZVtbHLkw",
+            authDomain: "database-online-750f1.firebaseapp.com",
+            projectId: "database-online-750f1",
+            storageBucket: "database-online-750f1.firebasestorage.app",
+            messagingSenderId: "582127839876",
+            appId: "1:582127839876:web:0a80ea8aefd66b17af30d1",
+            measurementId: "G-HQ4W89VVKH"
+        };
+        // =====================================================================
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithCustomToken, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, onSnapshot, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Initialize App Setup
+        const isCanvasEnv = typeof __firebase_config !== 'undefined';
+        const firebaseConfig = isCanvasEnv ? JSON.parse(__firebase_config) : MY_FIREBASE_CONFIG;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'cuantrack-app';
+
+        // DOM Elements
+        const els = {
+            totalAmount: document.getElementById('totalAmount'), incomeAmount: document.getElementById('incomeAmount'),
+            expenseAmount: document.getElementById('expenseAmount'), list: document.getElementById('expenseList'),
+            emptyState: document.getElementById('emptyState'), activeFilters: document.getElementById('activeFilters'),
+            limitText: document.getElementById('limitText'), limitPercentage: document.getElementById('limitPercentage'),
+            limitProgressBar: document.getElementById('limitProgressBar'), limitInput: document.getElementById('limitInput'),
+            amount: document.getElementById('amount'), desc: document.getElementById('desc'),
+            category: document.getElementById('category'), date: document.getElementById('date'),
+            fundSource: document.getElementById('fundSource'), fundSourceContainer: document.getElementById('fundSourceContainer'),
+            segmentBg: document.getElementById('segmentBg'), btnPengeluaran: document.getElementById('btnPengeluaran'),
+            btnPemasukan: document.getElementById('btnPemasukan'), submitBtn: document.getElementById('submitBtn'),
+            userName: document.getElementById('userName'), userAvatar: document.getElementById('userAvatar'),
+            loginScreen: document.getElementById('loginScreen')
+        };
+        els.date.valueAsDate = new Date();
+
+        // --------------------------------------------------------
+        // CHECK MISSING CONFIG FOR GOOGLE SITES
+        // --------------------------------------------------------
+        if (Object.keys(firebaseConfig).length === 0) {
+            const errEl = document.getElementById('loginError');
+            errEl.innerHTML = "<b>Konfigurasi Database Belum Diatur!</b><br>Untuk menjalankan aplikasi ini di Google Sites, Anda harus menghubungkannya ke Firebase milik Anda sendiri (Lihat panduan di obrolan).";
+            errEl.classList.remove('hidden');
+            
+            // Nonaktifkan tombol login
+            const btn = els.loginScreen.querySelector('button');
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            
+            // Hentikan proses script
+            throw new Error("Missing Firebase Config");
+        }
+
+        // Initialize Firebase safely
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Global Variables
+        let currentUser = null;
+        let unsubscribeTransactions = null;
+        let unsubscribeLimit = null;
+        let deleteTargetId = null;
+
+        // Data States (now synced with Cloud)
+        let transactions = [];
+        let monthlyLimit = 0;
+
+        // Constants
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-        
-        let transactions = JSON.parse(localStorage.getItem('keuanganku_data')) || [];
-        transactions = transactions.map(t => ({ ...t, type: t.type || 'pengeluaran', fundSource: t.fundSource || 'all' }));
-
-        let monthlyLimit = parseFloat(localStorage.getItem('keuanganku_limit')) || 0;
-
         const categoryData = {
             pengeluaran: [
                 { id: 'Makanan', label: '🍔 Makanan' }, { id: 'Transportasi', label: '🚗 Transportasi' },
@@ -331,8 +436,6 @@
                 { id: 'Lainnya', label: '📦 Lainnya' }
             ]
         };
-
-        // Colors for chart mirroring the tailwind setup
         const chartColors = {
             'Makanan': '#f97316', 'Transportasi': '#3b82f6', 'Belanja': '#ec4899',
             'Tagihan': '#ef4444', 'Hiburan': '#a855f7', 'Kesehatan': '#10b981',
@@ -341,14 +444,102 @@
         };
 
         // UI States
-        let currentType = 'pengeluaran'; // for Add Form
+        let currentType = 'pengeluaran'; 
         let activeFilters = { type: 'semua', time: 'semua', category: 'semua' };
-        
-        // Chart States
         let dashboardChart = null;
         let activeChartType = 'pengeluaran';
 
-        // --- FORMATTERS & HELPERS ---
+        // --------------------------------------------------------
+        // AUTHENTICATION LOGIC (Google Sign Up & Sign In)
+        // --------------------------------------------------------
+        
+        // Auto-login fallback ONLY for Canvas Preview environment
+        if (isCanvasEnv && typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+            signInWithCustomToken(auth, __initial_auth_token).catch(console.error);
+        }
+
+        window.loginApp = async () => {
+            const btn = els.loginScreen.querySelector('button');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Memproses...';
+            
+            try {
+                // Menggunakan Provider Google Asli
+                const provider = new GoogleAuthProvider();
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error("Login gagal", error);
+                btn.innerHTML = originalHTML;
+                const errEl = document.getElementById('loginError');
+                if(errEl) {
+                    errEl.innerHTML = "Jendela Login Google diblokir di mode Preview ini.<br>Silakan buka (deploy) aplikasi di tab/jendela baru untuk masuk.";
+                    errEl.classList.remove('hidden');
+                }
+            }
+        };
+
+        window.logout = async () => {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error("Logout gagal", error);
+            }
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                // Update UI Profile
+                els.userName.textContent = user.isAnonymous ? 'Pengguna Tamu' : (user.displayName || 'Pengguna');
+                if (user.photoURL && !user.isAnonymous) els.userAvatar.src = user.photoURL;
+                
+                els.loginScreen.classList.add('opacity-0', 'pointer-events-none');
+                
+                loadCloudData();
+            } else {
+                currentUser = null;
+                els.loginScreen.classList.remove('opacity-0', 'pointer-events-none');
+                document.getElementById('loginError').classList.add('hidden'); // Sembunyikan error saat reset
+                
+                // Clear state when logged out
+                transactions = [];
+                monthlyLimit = 0;
+                if (unsubscribeTransactions) unsubscribeTransactions();
+                if (unsubscribeLimit) unsubscribeLimit();
+                renderApp();
+            }
+        });
+
+        // --------------------------------------------------------
+        // CLOUD FIRESTORE LOGIC
+        // --------------------------------------------------------
+        
+        function loadCloudData() {
+            if (!currentUser) return;
+
+            const limitRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'limit');
+            unsubscribeLimit = onSnapshot(limitRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    monthlyLimit = docSnap.data().monthlyLimit || 0;
+                } else {
+                    monthlyLimit = 0;
+                }
+                renderApp();
+            }, (err) => console.error(err));
+
+            const txRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'transactions');
+            unsubscribeTransactions = onSnapshot(txRef, (snapshot) => {
+                transactions = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                renderApp();
+            }, (err) => console.error(err));
+        }
+
+        // --------------------------------------------------------
+        // UI HELPERS & FORMATTERS
+        // --------------------------------------------------------
         const formatRupiah = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num || 0);
         const formatDate = (dateString) => { const d = new Date(dateString); return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`; };
         const getCategoryIcon = (category) => {
@@ -365,23 +556,9 @@
         };
         const parseDateLocal = (dateString) => { const [y, m, d] = dateString.split('-'); return new Date(y, m - 1, d); };
 
-        // --- DOM ELEMENTS ---
-        const els = {
-            totalAmount: document.getElementById('totalAmount'), incomeAmount: document.getElementById('incomeAmount'),
-            expenseAmount: document.getElementById('expenseAmount'), list: document.getElementById('expenseList'),
-            emptyState: document.getElementById('emptyState'), activeFilters: document.getElementById('activeFilters'),
-            limitText: document.getElementById('limitText'), limitPercentage: document.getElementById('limitPercentage'),
-            limitProgressBar: document.getElementById('limitProgressBar'), limitInput: document.getElementById('limitInput'),
-            amount: document.getElementById('amount'), desc: document.getElementById('desc'),
-            category: document.getElementById('category'), date: document.getElementById('date'),
-            fundSource: document.getElementById('fundSource'), fundSourceContainer: document.getElementById('fundSourceContainer'),
-            segmentBg: document.getElementById('segmentBg'), btnPengeluaran: document.getElementById('btnPengeluaran'),
-            btnPemasukan: document.getElementById('btnPemasukan'), submitBtn: document.getElementById('submitBtn'),
-        };
-
-        els.date.valueAsDate = new Date();
-
-        // --- MODAL LOGIC ---
+        // --------------------------------------------------------
+        // MODALS & NAVIGATION LOGIC
+        // --------------------------------------------------------
         window.openModal = (id) => {
             document.getElementById('modalBackdrop').classList.remove('opacity-0', 'pointer-events-none');
             document.getElementById(id).classList.remove('translate-y-full');
@@ -390,11 +567,26 @@
 
         window.closeAllModals = () => {
             document.getElementById('modalBackdrop').classList.add('opacity-0', 'pointer-events-none');
-            document.querySelectorAll('.modal-sheet').forEach(sheet => sheet.classList.add('translate-y-full'));
+            document.querySelectorAll('.modal-sheet').forEach(sheet => {
+                if (sheet.id === 'confirmModal') {
+                    sheet.classList.add('opacity-0', 'pointer-events-none');
+                } else {
+                    sheet.classList.add('translate-y-full');
+                }
+            });
             els.amount.value = ''; els.desc.value = ''; 
         };
 
-        // --- FORM & FUND SOURCE LOGIC ---
+        window.closeConfirmModal = () => {
+            deleteTargetId = null;
+            document.getElementById('confirmModal').classList.add('opacity-0', 'pointer-events-none');
+            document.getElementById('confirmModalContent').classList.add('scale-95');
+            document.getElementById('confirmModalContent').classList.remove('scale-100');
+        };
+
+        // --------------------------------------------------------
+        // FORM & FUND SOURCE LOGIC
+        // --------------------------------------------------------
         function calculateBalances() {
             const balances = { 'all': 0 };
             categoryData.pemasukan.forEach(cat => balances[cat.id] = 0);
@@ -441,19 +633,26 @@
             }
         };
 
-        // --- BUDGET LIMIT LOGIC ---
+        // --------------------------------------------------------
+        // BUDGET LIMIT LOGIC
+        // --------------------------------------------------------
         window.openLimitModal = () => { els.limitInput.value = monthlyLimit > 0 ? monthlyLimit.toLocaleString('id-ID') : ''; openModal('limitBottomSheet'); };
-        window.saveLimit = () => {
-            monthlyLimit = parseFloat(els.limitInput.value.replace(/[^0-9]/g, '')) || 0;
-            localStorage.setItem('keuanganku_limit', monthlyLimit);
-            renderApp(); closeAllModals();
+        
+        window.saveLimit = async () => {
+            if (!currentUser) return;
+            const newLimit = parseFloat(els.limitInput.value.replace(/[^0-9]/g, '')) || 0;
+            
+            await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'limit'), {
+                monthlyLimit: newLimit
+            });
+            window.closeAllModals();
         };
 
-        // --- CHART JS LOGIC ---
+        // --------------------------------------------------------
+        // CHART JS LOGIC
+        // --------------------------------------------------------
         window.updateChartUI = (type) => {
             activeChartType = type;
-            
-            // Toggle Buttons UI
             const btnKeluar = document.getElementById('chartBtnPengeluaran');
             const btnMasuk = document.getElementById('chartBtnPemasukan');
             
@@ -464,22 +663,16 @@
                 btnMasuk.className = "px-3 py-1.5 text-[11px] font-bold rounded-lg bg-white shadow-sm text-emerald-600 transition-colors z-10";
                 btnKeluar.className = "px-3 py-1.5 text-[11px] font-bold rounded-lg text-slate-500 transition-colors z-10 hover:bg-slate-200";
             }
-            
             drawChart();
         };
 
         function drawChart() {
             const today = new Date();
-            
-            // Filter specific to active month and selected type
             const currentMonthTx = transactions.filter(t => {
                 const d = parseDateLocal(t.date);
-                return t.type === activeChartType && 
-                       d.getMonth() === today.getMonth() && 
-                       d.getFullYear() === today.getFullYear();
+                return t.type === activeChartType && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
             });
 
-            // Group by category
             const grouped = {};
             currentMonthTx.forEach(t => { grouped[t.category] = (grouped[t.category] || 0) + t.amount; });
             
@@ -498,58 +691,28 @@
             } else {
                 emptyState.classList.add('hidden');
                 canvasEl.classList.remove('hidden');
-
                 if (dashboardChart) dashboardChart.destroy();
                 
                 Chart.defaults.font.family = 'Inter';
-                Chart.defaults.color = '#64748b'; // slate-500
+                Chart.defaults.color = '#64748b';
 
                 dashboardChart = new Chart(ctx, {
                     type: 'doughnut',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            data: dataValues,
-                            backgroundColor: bgColors,
-                            borderWidth: 2,
-                            borderColor: '#ffffff',
-                            hoverOffset: 6
-                        }]
-                    },
+                    data: { labels: labels, datasets: [{ data: dataValues, backgroundColor: bgColors, borderWidth: 2, borderColor: '#ffffff', hoverOffset: 6 }] },
                     options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        cutout: '75%',
+                        responsive: true, maintainAspectRatio: false, cutout: '75%',
                         plugins: {
-                            legend: {
-                                position: 'right',
-                                labels: {
-                                    usePointStyle: true,
-                                    pointStyle: 'circle',
-                                    boxWidth: 6,
-                                    padding: 15,
-                                    font: { size: 10, weight: '600' }
-                                }
-                            },
-                            tooltip: {
-                                backgroundColor: 'rgba(15, 23, 42, 0.9)', // slate-900
-                                titleFont: { size: 11 },
-                                bodyFont: { size: 12, weight: 'bold' },
-                                padding: 12,
-                                cornerRadius: 12,
-                                callbacks: {
-                                    label: function(context) {
-                                        return ' ' + formatRupiah(context.raw);
-                                    }
-                                }
-                            }
+                            legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 6, padding: 15, font: { size: 10, weight: '600' } } },
+                            tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.9)', titleFont: { size: 11 }, bodyFont: { size: 12, weight: 'bold' }, padding: 12, cornerRadius: 12, callbacks: { label: function(context) { return ' ' + formatRupiah(context.raw); } } }
                         }
                     }
                 });
             }
         }
 
-        // --- DASHBOARD TOTALS & LIST LOGIC ---
+        // --------------------------------------------------------
+        // DASHBOARD TOTALS & UI LOGIC
+        // --------------------------------------------------------
         function updateTotalsAndLimit() {
             const balances = calculateBalances();
             const totalIncome = transactions.filter(t => t.type === 'pemasukan').reduce((s, i) => s + i.amount, 0);
@@ -579,7 +742,9 @@
             }
         }
 
-        // --- SMART FILTER LOGIC ---
+        // --------------------------------------------------------
+        // SMART FILTER LOGIC
+        // --------------------------------------------------------
         window.openFilterModal = () => {
             const updateFilterCat = () => {
                 const t = document.querySelector('input[name="f_type"]:checked').value;
@@ -602,10 +767,10 @@
             activeFilters.type = document.querySelector('input[name="f_type"]:checked').value;
             activeFilters.time = document.getElementById('f_time').value;
             activeFilters.category = document.getElementById('f_category').value;
-            renderApp(); closeAllModals();
+            renderApp(); window.closeAllModals();
         };
 
-        window.resetFilters = () => { activeFilters = { type: 'semua', time: 'semua', category: 'semua' }; renderApp(); closeAllModals(); };
+        window.resetFilters = () => { activeFilters = { type: 'semua', time: 'semua', category: 'semua' }; renderApp(); window.closeAllModals(); };
 
         function filterTransactions() {
             const today = new Date(); today.setHours(0,0,0,0);
@@ -663,7 +828,7 @@
                             </div>
                             <div class="flex flex-col items-end shrink-0 pl-2">
                                 <span class="font-extrabold ${amountColor} text-sm tabular-nums">${amountPrefix}${formatRupiah(item.amount)}</span>
-                                <button onclick="deleteExpense(${item.id})" class="text-slate-300 hover:text-red-500 active:text-red-600 transition-colors mt-1 p-1" title="Hapus">
+                                <button onclick="deleteExpense('${item.id}')" class="text-slate-300 hover:text-red-500 active:text-red-600 transition-colors mt-1 p-1" title="Hapus">
                                     <i class="fa-solid fa-trash-can text-sm"></i>
                                 </button>
                             </div>
@@ -676,11 +841,12 @@
         function renderApp() {
             updateTotalsAndLimit();
             updateListAndFiltersUI();
-            drawChart(); // Redraw chart on data change
-            localStorage.setItem('keuanganku_data', JSON.stringify(transactions));
+            drawChart();
         }
 
-        // --- EVENT LISTENERS ---
+        // --------------------------------------------------------
+        // CRUD EVENT LISTENERS (Save to Cloud)
+        // --------------------------------------------------------
         const handleNumberInput = (e) => {
             let val = e.target.value.replace(/[^0-9]/g, '');
             e.target.value = val !== '' ? parseInt(val, 10).toLocaleString('id-ID') : '';
@@ -688,8 +854,10 @@
         els.amount.addEventListener('input', handleNumberInput);
         els.limitInput.addEventListener('input', handleNumberInput);
 
-        document.getElementById('expenseForm').addEventListener('submit', (e) => {
+        document.getElementById('expenseForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (!currentUser) return;
+
             const desc = els.desc.value;
             const amount = parseFloat(els.amount.value.replace(/\./g, ''));
             const category = els.category.value;
@@ -698,21 +866,31 @@
 
             if (!desc || isNaN(amount) || amount <= 0) return;
 
-            transactions.push({ id: Date.now(), type: currentType, desc, amount, category, date, fundSource });
+            // Save to Cloud instead of pushing to array locally
+            const txRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'transactions');
+            await addDoc(txRef, {
+                type: currentType, desc, amount, category, date, fundSource, createdAt: Date.now()
+            });
             
-            renderApp(); closeAllModals();
+            window.closeAllModals();
         });
 
         window.deleteExpense = function(id) {
-            if(confirm('Hapus transaksi ini? Data saldo/limit akan menyesuaikan kembali.')) {
-                transactions = transactions.filter(t => t.id !== id);
-                renderApp();
-            }
+            deleteTargetId = id;
+            document.getElementById('confirmModal').classList.remove('opacity-0', 'pointer-events-none');
+            document.getElementById('confirmModalContent').classList.remove('scale-95');
+            document.getElementById('confirmModalContent').classList.add('scale-100');
         };
 
-        // Init App
-        switchMenu('pengeluaran');
-        renderApp();
+        document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+            if(deleteTargetId && currentUser) {
+                await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'transactions', deleteTargetId));
+                window.closeConfirmModal();
+            }
+        });
+
+        // Initialize UI Base
+        window.switchMenu('pengeluaran');
 
     </script>
 </body>
